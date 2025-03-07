@@ -6,6 +6,20 @@ interface DecimoTerceiroResultado {
   total: number;
 }
 
+interface SalarioLiquidoEfetivoResultado {
+  salarioBruto: number;
+  valeTransporte: number;
+  valeRefeicao: number;
+  outrosBeneficios: number;
+  vrFeriasMensal: number;
+  vrDecimoTerceiroMensal: number;
+  vrFgts: number;
+  inssTotal: number;
+  irpfTotal: number;
+  descValeTransporte: number;
+  salarioLiquidoEfetivo: number;
+}
+
 export const calcularDecimoTerceiro = (salarioBruto: number, nMesesTrabalhados: number): DecimoTerceiroResultado => {
   let salarioAnual = (salarioBruto * nMesesTrabalhados) / 12
 
@@ -21,6 +35,33 @@ export const calcularDecimoTerceiro = (salarioBruto: number, nMesesTrabalhados: 
 
   return {primeiraParcela, segundaParcela, inss, irpf, total}
 }
+
+export const calcularSalarioLiquidoEfetivo = (salarioBruto: number, valeRefeicao: number, valeTransporte: number, outrosBeneficios: number ): SalarioLiquidoEfetivoResultado => {
+  const inssBase = calculadoraINSS(salarioBruto);
+  const irpfBase = calculadoraIRPF(salarioBruto - inssBase);
+
+  const vrFerias = calculadoraFerias(salarioBruto, 30, false);
+  const inssFerias = calculadoraINSS(vrFerias);
+  const irpfFerias = calculadoraIRPF(vrFerias - inssFerias);
+  const vrFeriasMensal = vrFerias / 12;
+
+  const {primeiraParcela: vrDecimoTerceiro, inss: inssDecimoTerceiro, irpf: irpfDecimoTerceiro } = calcularDecimoTerceiro(salarioBruto, 12);
+  const vrDecimoTerceiroMensal = vrDecimoTerceiro / 6;
+
+  const vrFgts = calculadoraFgts(salarioBruto);
+  const descValeTransporte = Math.min(salarioBruto * 0.06, valeTransporte)
+
+  const receitas = (salarioBruto + vrFeriasMensal + vrDecimoTerceiroMensal + vrFgts + outrosBeneficios + valeTransporte + valeRefeicao)
+
+  const inssTotal = inssBase + ((inssFerias + inssDecimoTerceiro) / 12)
+  const irpfTotal = irpfBase + ((irpfFerias + irpfDecimoTerceiro) / 12)
+  const despesas = descValeTransporte + inssTotal + irpfTotal
+
+  const salarioLiquidoEfetivo = receitas - despesas
+
+  return {salarioBruto, valeTransporte, valeRefeicao, outrosBeneficios, vrFeriasMensal, vrDecimoTerceiroMensal, vrFgts, inssTotal, irpfTotal, descValeTransporte, salarioLiquidoEfetivo}
+}
+
 
 export const calculadoraINSS = (baseINSS: number): number => {
   const tetoInss = 908.85;
@@ -66,3 +107,22 @@ export const calculadoraIRPF = (baseIRPF: number): number => {
 
   return irpf < 0 ? 0 : irpf;
 };
+
+export const calculadoraFerias = (salarioBruto: number, diasFerias: number, abateDescontos: boolean): number => {
+  const valorDiario = salarioBruto / 30;
+  const feriasBase = valorDiario * diasFerias
+  const adicionalUmTerco = feriasBase / 3
+  const totalFeriasBruto = feriasBase + adicionalUmTerco
+
+  const inss = calculadoraINSS(totalFeriasBruto);
+  const irpf = calculadoraIRPF(totalFeriasBruto - inss)
+
+  const totalLiquido = totalFeriasBruto - inss - irpf
+
+  return abateDescontos == true ? totalLiquido : totalFeriasBruto;
+}
+
+const calculadoraFgts= (salarioBruto: number): number => {
+  const total = salarioBruto * 0.08
+  return total;
+}

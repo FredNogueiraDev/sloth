@@ -5,6 +5,7 @@ import { Input } from "../../components/Input";
 import { calcularDecimoTerceiro } from "../../app/utils/calculosCLT";
 import { Button } from "../../components/Button";
 import { Footer } from "../../components/Footer";
+import { validateError, validateAmount, validateMonth } from "../../app/utils/formValidations";
 
 interface DecimoTerceiroResultado {
   primeiraParcela: number;
@@ -15,8 +16,8 @@ interface DecimoTerceiroResultado {
 }
 
 export function DecimoTerceiro() {
-  const [salarioBruto, setSalarioBruto] = useState("");
-  const [nMesesTrabalhados, setNMesesTrabalhados] = useState("");
+  const [salarioBruto, setSalarioBruto] = useState("0,00");
+  const [nMesesTrabalhados, setNMesesTrabalhados] = useState("0,00");
   const [resultado, setResultado] = useState<DecimoTerceiroResultado | null>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -25,9 +26,10 @@ export function DecimoTerceiro() {
     const salario = parseFloat(salarioBruto);
     const meses = parseInt(nMesesTrabalhados);
 
-    // AJUSTAR VALIDAÇÕES
-    if (isNaN(salario) || isNaN(meses) || salario <= 0 || meses < 1 || meses > 12) {
-      alert("Por favor, insira valores válidos: Salário > 0 e Meses entre 1 e 12.");
+    const salarioValido = validateAmount(salario, 'Salário Bruto');
+    const mesValido = validateMonth(meses);
+
+    if (validateError(mesValido) || validateError(salarioValido)) {
       return;
     }
 
@@ -40,7 +42,7 @@ export function DecimoTerceiro() {
       <main className="w-full h-full flex flex-col bg-gray-0 overflow-y-auto">
       <Header/>
       <FormCalculo title="Cálculo de 13° Salário">
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className="flex flex-wrap gap-2 justify-center">
           <Input
             id="salarioBruto"
             title="Salário Bruto"
@@ -48,7 +50,7 @@ export function DecimoTerceiro() {
             onChange={(e) => setSalarioBruto(e.target.value)}
             type="number"
             step="0.01"
-            placeholder="Digite o salário bruto"
+            placeholder="R$ 0,00"
           />
           <Input
             id="nMesesTrabalhados"
@@ -56,7 +58,7 @@ export function DecimoTerceiro() {
             value={nMesesTrabalhados}
             onChange={(e) => setNMesesTrabalhados(e.target.value)}
             type="number"
-            placeholder="Digite os meses trabalhados"
+            placeholder="R$ 0,00"
           />
           <Button type="submit">Calcular</Button>
         </form>
@@ -99,7 +101,7 @@ export function DecimoTerceiro() {
                   </tr>
                   <tr className="border-b border-gray-700">
                       <td className="w-6/12 px-6 py-2 font-medium text-white bg-gray-800">
-                        (+) Total Líquido
+                        (=) Total Líquido
                       </td>
                       <td className="px-6 py-2 bg-gray-600 font-medium text-white text-center">
                         R$ {resultado.total.toFixed(2)}
@@ -112,7 +114,7 @@ export function DecimoTerceiro() {
 
       </FormCalculo>
 
-      <Footer></Footer>
+      <Footer/>
       </main>
     </div>
   );
