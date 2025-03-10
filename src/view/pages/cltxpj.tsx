@@ -22,31 +22,54 @@ interface CltxPj {
 }
 
 export function CltxPj() {
-  const [salarioBruto, setSalarioBruto] = useState("0,00");
-  const [valeRefeicao, setValeRefeicao] = useState("0,00");
-  const [valeTransporte, setValeTransporte] = useState("0,00");
-  const [outrosBeneficios, setOutrosBeneficios] = useState("0,00");
+  const [formData, setFormData] = useState({
+    salarioBruto: "0,00",
+    valeRefeicao: "0,00",
+    valeTransporte: "0,00",
+    outrosBeneficios: "0,00",
+  });
   const [resultado, setResultado] = useState<CltxPj | null>(null);
+
+  const parseCurrency = (value: string): number => {
+    return Number(value.replace(/[^0-9,]/g, "").replace(",", "."));
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const salario = parseFloat(salarioBruto);
-    const VR = parseFloat(valeRefeicao);
-    const VT = parseFloat(valeTransporte);
-    const outros = parseFloat(outrosBeneficios);
+    const formDataNumerico = {
+      salarioBruto: parseCurrency(formData.salarioBruto),
+      valeRefeicao: parseCurrency(formData.valeRefeicao),
+      valeTransporte: parseCurrency(formData.valeTransporte),
+      outrosBeneficios: parseCurrency(formData.outrosBeneficios),
+    };
 
-    const salarioValido = validateAmount(salario, 'Salário Bruto');
-    const VRValido = validateAmount(VR, 'Vale Refeição');
-    const VTValido = validateAmount(VT, 'Vale Transporte');
-    const outrosValido = validateAmount(outros, 'Outros Benefícios');
+    const salarioValido = validateAmount(formDataNumerico.salarioBruto, 'Salário Bruto');
+    const VRValido = validateAmount(formDataNumerico.valeRefeicao, 'Vale Refeição');
+    const VTValido = validateAmount(formDataNumerico.valeTransporte, 'Vale Transporte');
+    const outrosValido = validateAmount(formDataNumerico.outrosBeneficios, 'Outros Benefícios');
 
     if (validateError(salarioValido) || validateError(VRValido) || validateError(VTValido) || validateError(outrosValido)) {
       return;
     }
 
-    const calculo = calcularSalarioLiquidoEfetivo(salario, VR, VT, outros);
+    const calculo = calcularSalarioLiquidoEfetivo(formDataNumerico.salarioBruto, formDataNumerico.valeRefeicao, formDataNumerico.valeTransporte, formDataNumerico.outrosBeneficios);
     setResultado(calculo);
+  };
+
+  const formataMoeda = (valor: string) => {
+    const valorLimpo = valor.replace(/\D/g, "");
+    const valorNumber = Number(valorLimpo) / 100;
+    return valorNumber.toLocaleString('pt-br', {minimumFractionDigits: 2});
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+
+    setFormData((prevState) => ({
+      ...prevState,
+      [name]: formataMoeda(value),
+    }));
   };
 
   return (
@@ -58,38 +81,34 @@ export function CltxPj() {
           <Input
             id="salarioBruto"
             title="Salário Bruto"
-            value={salarioBruto}
-            onChange={(e) => setSalarioBruto((e.target.value))}
-            type="number"
-            step="0.01"
-            placeholder="R$ 0,00"
+            name="salarioBruto"
+            value={formData.salarioBruto}
+            onChange={handleChange}
+            type="text"
           />
           <Input
             id="valeRefeicao"
             title="Vale Refeição"
-            value={valeRefeicao}
-            onChange={(e) => setValeRefeicao((e.target.value))}
-            type="number"
-            step="0.01"
-            placeholder="R$ 0,00"
+            name="valeRefeicao"
+            value={formData.valeRefeicao}
+            onChange={handleChange}
+            type="text"
           />
           <Input
             id="valeTransporte"
             title="Vale Transporte"
-            value={valeTransporte}
-            onChange={(e) => setValeTransporte((e.target.value))}
-            type="number"
-            step="0.01"
-            placeholder="R$ 0,00"
+            name="valeTransporte"
+            value={formData.valeTransporte}
+            onChange={handleChange}
+            type="text"
           />
           <Input
             id="outrosBeneficios"
             title="Outros Benefícios"
-            value={outrosBeneficios}
-            onChange={(e) => setOutrosBeneficios((e.target.value))}
-            type="number"
-            step="0.01"
-            placeholder="R$ 0,00"
+            name="outrosBeneficios"
+            value={formData.outrosBeneficios}
+            onChange={handleChange}
+            type="text"
           />
           <Button type="submit">Calcular</Button>
         </form>
