@@ -5,7 +5,9 @@ import { Input } from "../../components/Input";
 import { calcularSalarioLiquidoEfetivo } from "../../app/utils/calculosCLT";
 import { Button } from "../../components/Button";
 import { Footer } from "../../components/Footer";
-import { validateError, validateAmount } from "../../app/utils/formValidations";
+import { validateAmounts, ValidationResult, ValidationEntry } from "../../app/utils/formValidations";
+import { handleChange } from "../../app/utils/formataMoeda";
+import { parseCurrency } from "../../app/utils/parseCurrency";
 
 interface CltxPj {
   salarioBruto: number;
@@ -21,6 +23,13 @@ interface CltxPj {
   salarioLiquidoEfetivo: number;
 }
 
+interface FormDataNumerico {
+  salarioBruto: number;
+  valeRefeicao: number;
+  valeTransporte: number;
+  outrosBeneficios: number;
+}
+
 export function CltxPj() {
   const [formData, setFormData] = useState({
     salarioBruto: "0,00",
@@ -30,9 +39,15 @@ export function CltxPj() {
   });
   const [resultado, setResultado] = useState<CltxPj | null>(null);
 
-  const parseCurrency = (value: string): number => {
-    return Number(value.replace(/[^0-9,]/g, "").replace(",", "."));
-  };
+  function validateFormDataNumerico(formData: FormDataNumerico): ValidationResult {
+    const entries: ValidationEntry[] = [
+      { value: formData.salarioBruto, label: 'Salário Bruto' },
+      { value: formData.valeRefeicao, label: 'Vale Refeição' },
+      { value: formData.valeTransporte, label: 'Vale Transporte' },
+      { value: formData.outrosBeneficios, label: 'Outros Benefícios' },
+    ];
+    return validateAmounts(entries);
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,32 +59,14 @@ export function CltxPj() {
       outrosBeneficios: parseCurrency(formData.outrosBeneficios),
     };
 
-    const salarioValido = validateAmount(formDataNumerico.salarioBruto, 'Salário Bruto');
-    const VRValido = validateAmount(formDataNumerico.valeRefeicao, 'Vale Refeição');
-    const VTValido = validateAmount(formDataNumerico.valeTransporte, 'Vale Transporte');
-    const outrosValido = validateAmount(formDataNumerico.outrosBeneficios, 'Outros Benefícios');
+    const validationResult = validateFormDataNumerico(formDataNumerico);
 
-    if (validateError(salarioValido) || validateError(VRValido) || validateError(VTValido) || validateError(outrosValido)) {
+    if (!validationResult.isValid) {
       return;
     }
 
     const calculo = calcularSalarioLiquidoEfetivo(formDataNumerico.salarioBruto, formDataNumerico.valeRefeicao, formDataNumerico.valeTransporte, formDataNumerico.outrosBeneficios);
     setResultado(calculo);
-  };
-
-  const formataMoeda = (valor: string) => {
-    const valorLimpo = valor.replace(/\D/g, "");
-    const valorNumber = Number(valorLimpo) / 100;
-    return valorNumber.toLocaleString('pt-br', {minimumFractionDigits: 2});
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-
-    setFormData((prevState) => ({
-      ...prevState,
-      [name]: formataMoeda(value),
-    }));
   };
 
   return (
@@ -83,7 +80,7 @@ export function CltxPj() {
             title="Salário Bruto"
             name="salarioBruto"
             value={formData.salarioBruto}
-            onChange={handleChange}
+            onChange={(e) => handleChange(e, setFormData)}
             type="text"
           />
           <Input
@@ -91,7 +88,7 @@ export function CltxPj() {
             title="Vale Refeição"
             name="valeRefeicao"
             value={formData.valeRefeicao}
-            onChange={handleChange}
+            onChange={(e) => handleChange(e, setFormData)}
             type="text"
           />
           <Input
@@ -99,7 +96,7 @@ export function CltxPj() {
             title="Vale Transporte"
             name="valeTransporte"
             value={formData.valeTransporte}
-            onChange={handleChange}
+            onChange={(e) => handleChange(e, setFormData)}
             type="text"
           />
           <Input
@@ -107,7 +104,7 @@ export function CltxPj() {
             title="Outros Benefícios"
             name="outrosBeneficios"
             value={formData.outrosBeneficios}
-            onChange={handleChange}
+            onChange={(e) => handleChange(e, setFormData)}
             type="text"
           />
           <Button type="submit">Calcular</Button>
