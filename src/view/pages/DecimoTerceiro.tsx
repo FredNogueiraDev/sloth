@@ -5,7 +5,9 @@ import { Input } from "../../components/Input";
 import { calcularDecimoTerceiro } from "../../app/utils/calculosCLT";
 import { Button } from "../../components/Button";
 import { Footer } from "../../components/Footer";
-import { validateError, validateAmount, validateMonth } from "../../app/utils/formValidations";
+import { validateMonth, validateError, validateAmount} from "../../app/utils/formValidations";
+import { handleChange } from "../../app/utils/formataMoeda";
+import { parseCurrency } from "../../app/utils/parseCurrency";
 
 interface DecimoTerceiroResultado {
   primeiraParcela: number;
@@ -16,24 +18,34 @@ interface DecimoTerceiroResultado {
 }
 
 export function DecimoTerceiro() {
-  const [salarioBruto, setSalarioBruto] = useState("0,00");
-  const [nMesesTrabalhados, setNMesesTrabalhados] = useState("0,00");
+  const [formData, setFormData] = useState({
+    salarioBruto: "0,00",
+    nMesesTrabalhados: "0"
+  });
+
   const [resultado, setResultado] = useState<DecimoTerceiroResultado | null>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const salario = parseFloat(salarioBruto);
-    const meses = parseInt(nMesesTrabalhados);
+    const formDataNumerico = {
+      salarioBruto: parseCurrency(formData.salarioBruto),
+      nMesesTrabalhados: parseInt(formData.nMesesTrabalhados)
+    };
 
-    const salarioValido = validateAmount(salario, 'Salário Bruto');
-    const mesValido = validateMonth(meses);
+    const validationResult = validateAmount(formDataNumerico.salarioBruto, "Salário Bruto");
+    const validationMonth = validateMonth(formDataNumerico.nMesesTrabalhados)
 
-    if (validateError(mesValido) || validateError(salarioValido)) {
+    const errors = [];
+    if (!validationResult.isValid) errors.push(validationResult);
+    if (!validationMonth.isValid) errors.push(validationMonth);
+
+    if (errors.length > 0) {
+      errors.forEach(validateError);
       return;
     }
 
-    const calculo = calcularDecimoTerceiro(salario, meses);
+    const calculo = calcularDecimoTerceiro(formDataNumerico.salarioBruto, formDataNumerico.nMesesTrabalhados);
     setResultado(calculo);
   };
 
@@ -46,19 +58,21 @@ export function DecimoTerceiro() {
           <Input
             id="salarioBruto"
             title="Salário Bruto"
-            value={salarioBruto}
-            onChange={(e) => setSalarioBruto(e.target.value)}
-            type="number"
-            step="0.01"
-            placeholder="R$ 0,00"
+            name="salarioBruto"
+            value={formData.salarioBruto}
+            onChange={(e) => handleChange(e, setFormData)}
+            type="text"
           />
+
           <Input
             id="nMesesTrabalhados"
             title="N° Meses Trabalhados"
-            value={nMesesTrabalhados}
-            onChange={(e) => setNMesesTrabalhados(e.target.value)}
+            name="nMesesTrabalhados"
+            value={formData.nMesesTrabalhados}
+            onChange={(e) => handleChange(e, setFormData, false)}
+            step={1}
             type="number"
-            placeholder="R$ 0,00"
+            isCurrency={false}
           />
           <Button type="submit">Calcular</Button>
         </form>

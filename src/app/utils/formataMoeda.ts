@@ -8,12 +8,13 @@ export const formataMoeda = (valor: string) => {
 
 export function handleChange<T>(
   e: ChangeEvent<HTMLInputElement>,
-  setFormData: React.Dispatch<React.SetStateAction<T>>
+  setFormData: React.Dispatch<React.SetStateAction<T>>,
+  execFormataMoeda: boolean = true
 ) {
   const { name, value } = e.target;
 
   setFormData((prevState) => ({
     ...prevState,
-    [name]: formataMoeda(value),
+    [name]: (execFormataMoeda ? formataMoeda(value) : value),
   }));
 }
