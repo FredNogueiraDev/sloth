@@ -9,7 +9,7 @@ interface FormCalculoProps {
 export function FormCalculo({isLoading, title, children}: FormCalculoProps) {
   return (
     <div
-    className="bg-green-darker m-auto w-4/5 max-w-[500px] min-w-[300px] p-2 rounded-md text-green-light"
+    className="bg-white m-auto w-4/5 max-w-[500px] min-w-[300px] p-2 rounded-md text-green-darker flex flex-col gap-2"
     >
     {!isLoading && (
       <div>

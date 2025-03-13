@@ -9,9 +9,7 @@ export function Button({isLoading, disabled, children, ...props}: ButtonProps) {
   return (
     <button
     disabled={isLoading || disabled}
-    className="w-full bg-green-normal rounded-lg border border-green-darker px-3 h-[52px]
-    text-green-darker font-bold focus-visible:outline-none hover:bg-green-normalHover
-    disabled:bg-green-light disabled:text-green-darker"
+    className="w-full text-green-darker rounded-lg bg-green-light hover:text-gray-900 px-3 h-[52px] font-medium focus-visible:outline-none hover:bg-green-lightHover disabled:text-green-lightActive"
     {...props}
     >
     {!isLoading && children}
